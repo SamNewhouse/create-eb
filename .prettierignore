@@ -1,0 +1,4 @@
+node_modules/
+.expo
+*.md
+expo-env.d.ts
