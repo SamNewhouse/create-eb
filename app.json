@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "create-etb",
-    "slug": "create-etb",
+    "name": "create-eb",
+    "slug": "create-eb",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "createetb",
+    "scheme": "create-eb",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
