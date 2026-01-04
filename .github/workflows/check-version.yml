@@ -1,0 +1,75 @@
+name: Check version
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths-ignore:
+      - ".github/workflows/**"
+      - "renovate.json"
+
+permissions:
+  contents: write
+
+jobs:
+  check_version:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24.x"
+
+      - name: Fetch main branch
+        run: git fetch origin main:main
+
+      - name: Get versions
+        id: get_versions
+        run: |
+          MAIN_VERSION=$(jq -r .version <(git show main:package.json))
+          BRANCH_VERSION=$(jq -r .version package.json)
+          echo "MAIN_VERSION=$MAIN_VERSION" >> $GITHUB_ENV
+          echo "BRANCH_VERSION=$BRANCH_VERSION" >> $GITHUB_ENV
+          echo "Main version: $MAIN_VERSION"
+          echo "Branch version: $BRANCH_VERSION"
+
+      - name: Decide if patch bump needed
+        id: decide_bump
+        run: |
+          IFS='.' read -r maj min pat <<< "$MAIN_VERSION"
+          NEXT_PATCH=$((pat + 1))
+          NEXT_VERSION="${maj}.${min}.${NEXT_PATCH}"
+          if [ "$BRANCH_VERSION" = "$MAIN_VERSION" ]; then
+            echo "version_updated=true" >> $GITHUB_ENV
+            echo "new_version=$NEXT_VERSION" >> $GITHUB_ENV
+            echo "Patch bump needed: $NEXT_VERSION"
+          else
+            echo "version_updated=false" >> $GITHUB_ENV
+            echo "Patch bump not needed"
+          fi
+
+      - name: Bump patch version
+        if: env.version_updated == 'true'
+        run: |
+          git config --global user.name "SamNewhouse"
+          git config --global user.email "hello@samnewhouse.co.uk"
+
+          NEW_VERSION=${{ env.new_version }}
+          npm version "$NEW_VERSION" --no-git-tag-version
+
+          git add package.json package-lock.json
+          git commit -m "v$NEW_VERSION"
+          git push origin HEAD:${GITHUB_HEAD_REF}
+        env:
+          GITHUB_HEAD_REF: ${{ github.head_ref }}
+
+      - name: Success
+        run: echo "Version check completed."
+
+      - name: Failure
+        if: failure()
+        run: echo "Version check failed."
