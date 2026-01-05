@@ -7,7 +7,7 @@
   "packageRules": [
     {
       "matchFileNames": ["package.json"],
-      "commitMessagePrefix": "[DEPENDENCY]",
+      "commitMessagePrefix": "[DEP]",
       "matchPackageNames": ["*"],
       "automerge": false,
       "separateMultipleMajor": true
